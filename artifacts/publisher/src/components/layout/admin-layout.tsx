@@ -30,8 +30,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-muted/30 p-4">
         <div className="max-w-md w-full bg-card border shadow-sm rounded-lg p-8 text-center">
-          <div className="h-12 w-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <Settings className="w-6 h-6" />
+          <div className="h-25 w-25 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+            <img src="/images/ph-logo.png" alt="Logo" />
           </div>
           <h1 className="font-serif text-2xl mb-2">
             {settings?.publisherName || "Publisher"} Admin
