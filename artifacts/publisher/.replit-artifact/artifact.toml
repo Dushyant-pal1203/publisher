@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Book Publisher"
+version = "1.0.0"
+id = "artifacts/publisher"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18492
+
+[services.development]
+run = "pnpm --filter @workspace/publisher run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/publisher", "run", "build" ]
+publicDir = "artifacts/publisher/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18492"
+BASE_PATH = "/"

@@ -1,0 +1,913 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: Auth
+    description: Browser and mobile authentication endpoints.
+  - name: Storage
+    description: Object storage upload and serving endpoints.
+  - name: Articles
+    description: Books, journals, and other publications managed by the publisher.
+  - name: Orders
+    description: Customer orders placed online or via WhatsApp.
+  - name: Settings
+    description: Publisher settings (WhatsApp number, payment instructions).
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to the returnTo path on success.
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '302':
+          description: Redirect to the OIDC provider logout URL.
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileTokenExchangeRequest'
+      responses:
+        '200':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenExchangeSuccess'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Token did not contain usable claims.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Token exchange failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+      responses:
+        '200':
+          description: Logout processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccess'
+
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object content streamed.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an uploaded object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Object content streamed.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /articles:
+    get:
+      tags: [Articles]
+      operationId: listArticles
+      summary: List all published articles (public)
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ArticleType'
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: featured
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of articles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Article'
+    post:
+      tags: [Articles]
+      operationId: createArticle
+      summary: Create a new article (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleInput'
+      responses:
+        '201':
+          description: Article created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /articles/{id}:
+    get:
+      tags: [Articles]
+      operationId: getArticle
+      summary: Get a single article by id (public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Article details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '404':
+          description: Article not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    patch:
+      tags: [Articles]
+      operationId: updateArticle
+      summary: Update an article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleInput'
+      responses:
+        '200':
+          description: Article updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      tags: [Articles]
+      operationId: deleteArticle
+      summary: Delete an article (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Article deleted.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /catalog/summary:
+    get:
+      tags: [Articles]
+      operationId: getCatalogSummary
+      summary: Catalog overview — totals by type and featured items
+      responses:
+        '200':
+          description: Catalog summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogSummary'
+
+  /orders:
+    get:
+      tags: [Orders]
+      operationId: listOrders
+      summary: List all orders (admin only)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+      responses:
+        '200':
+          description: List of orders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    post:
+      tags: [Orders]
+      operationId: createOrder
+      summary: Place an order (public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Order placed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /orders/{id}:
+    patch:
+      tags: [Orders]
+      operationId: updateOrderStatus
+      summary: Update order status (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusUpdate'
+      responses:
+        '200':
+          description: Order updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+    delete:
+      tags: [Orders]
+      operationId: deleteOrder
+      summary: Delete an order (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /orders/summary:
+    get:
+      tags: [Orders]
+      operationId: getOrdersSummary
+      summary: Orders dashboard overview (admin only)
+      responses:
+        '200':
+          description: Orders summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersSummary'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /settings:
+    get:
+      tags: [Settings]
+      operationId: getSettings
+      summary: Get publisher settings (public)
+      responses:
+        '200':
+          description: Publisher settings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+    put:
+      tags: [Settings]
+      operationId: updateSettings
+      summary: Update publisher settings (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsInput'
+      responses:
+        '200':
+          description: Settings updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+          format: email
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/UploadUrlRequest'
+
+    ArticleType:
+      type: string
+      enum: [book, journal, magazine, ebook, other]
+    Article:
+      type: object
+      required:
+        - id
+        - title
+        - author
+        - type
+        - description
+        - price
+        - currency
+        - inStock
+        - featured
+        - createdAt
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+        type:
+          $ref: '#/components/schemas/ArticleType'
+        description:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+        coverImageUrl:
+          type: [string, 'null']
+        category:
+          type: [string, 'null']
+        isbn:
+          type: [string, 'null']
+        publishedYear:
+          type: [integer, 'null']
+        pageCount:
+          type: [integer, 'null']
+        language:
+          type: [string, 'null']
+        publisher:
+          type: [string, 'null']
+        inStock:
+          type: boolean
+        featured:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    ArticleInput:
+      type: object
+      required: [title, author, type, description, price]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        author:
+          type: string
+          minLength: 1
+        type:
+          $ref: '#/components/schemas/ArticleType'
+        description:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        currency:
+          type: string
+          default: INR
+        coverImageUrl:
+          type: [string, 'null']
+        category:
+          type: [string, 'null']
+        isbn:
+          type: [string, 'null']
+        publishedYear:
+          type: [integer, 'null']
+        pageCount:
+          type: [integer, 'null']
+        language:
+          type: [string, 'null']
+        publisher:
+          type: [string, 'null']
+        inStock:
+          type: boolean
+        featured:
+          type: boolean
+
+    CatalogTypeCount:
+      type: object
+      required: [type, count]
+      properties:
+        type:
+          $ref: '#/components/schemas/ArticleType'
+        count:
+          type: integer
+    CatalogSummary:
+      type: object
+      required: [totalArticles, byType, featured, latest]
+      properties:
+        totalArticles:
+          type: integer
+        byType:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogTypeCount'
+        featured:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+        latest:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+
+    OrderStatus:
+      type: string
+      enum: [pending, confirmed, shipped, delivered, cancelled]
+    PaymentMethod:
+      type: string
+      enum: [whatsapp, online]
+    Order:
+      type: object
+      required:
+        - id
+        - articleId
+        - articleTitle
+        - quantity
+        - customerName
+        - customerPhone
+        - customerAddress
+        - paymentMethod
+        - status
+        - totalAmount
+        - currency
+        - createdAt
+      properties:
+        id:
+          type: integer
+        articleId:
+          type: integer
+        articleTitle:
+          type: string
+        articleAuthor:
+          type: [string, 'null']
+        quantity:
+          type: integer
+        customerName:
+          type: string
+        customerEmail:
+          type: [string, 'null']
+        customerPhone:
+          type: string
+        customerAddress:
+          type: string
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        totalAmount:
+          type: number
+        currency:
+          type: string
+        notes:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+    OrderInput:
+      type: object
+      required: [articleId, quantity, customerName, customerPhone, customerAddress, paymentMethod]
+      properties:
+        articleId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        customerName:
+          type: string
+          minLength: 1
+        customerEmail:
+          type: [string, 'null']
+        customerPhone:
+          type: string
+          minLength: 5
+        customerAddress:
+          type: string
+          minLength: 1
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        notes:
+          type: [string, 'null']
+    OrderStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+    OrderStatusCount:
+      type: object
+      required: [status, count]
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        count:
+          type: integer
+    OrdersSummary:
+      type: object
+      required: [totalOrders, pendingOrders, totalRevenue, byStatus, recent]
+      properties:
+        totalOrders:
+          type: integer
+        pendingOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        byStatus:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderStatusCount'
+        recent:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+
+    Settings:
+      type: object
+      required: [publisherName, whatsappNumber, currency]
+      properties:
+        publisherName:
+          type: string
+        tagline:
+          type: [string, 'null']
+        about:
+          type: [string, 'null']
+        whatsappNumber:
+          type: string
+          description: Phone number in international format including country code, no + sign (e.g. 919876543210)
+        contactEmail:
+          type: [string, 'null']
+        contactAddress:
+          type: [string, 'null']
+        currency:
+          type: string
+        upiId:
+          type: [string, 'null']
+        bankDetails:
+          type: [string, 'null']
+        paymentInstructions:
+          type: [string, 'null']
+    SettingsInput:
+      type: object
+      required: [publisherName, whatsappNumber, currency]
+      properties:
+        publisherName:
+          type: string
+          minLength: 1
+        tagline:
+          type: [string, 'null']
+        about:
+          type: [string, 'null']
+        whatsappNumber:
+          type: string
+          minLength: 5
+        contactEmail:
+          type: [string, 'null']
+        contactAddress:
+          type: [string, 'null']
+        currency:
+          type: string
+          minLength: 1
+        upiId:
+          type: [string, 'null']
+        bankDetails:
+          type: [string, 'null']
+        paymentInstructions:
+          type: [string, 'null']
