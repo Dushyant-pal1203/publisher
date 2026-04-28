@@ -1,18 +1,19 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health";
-import authRouter from "./auth";
-import storageRouter from "./storage";
-import articlesRouter from "./articles";
-import ordersRouter from "./orders";
-import settingsRouter from "./settings";
+import { Router } from "express";
+import adminAuthRoutes from "./admin-auth";
+import articleRoutes from "./articles";
+import orderRoutes from "./orders";
+import settingsRoutes from "./settings";
+import storageRoutes from "./storage";
 
-const router: IRouter = Router();
+const router = Router();
 
-router.use(healthRouter);
-router.use(authRouter);
-router.use(storageRouter);
-router.use(articlesRouter);
-router.use(ordersRouter);
-router.use(settingsRouter);
+// Admin auth routes (no auth required)
+router.use(adminAuthRoutes);
+
+// Protected routes (auth required)
+router.use("/articles", articleRoutes);
+router.use("/orders", orderRoutes);
+router.use("/settings", settingsRoutes);
+router.use("/storage", storageRoutes);
 
 export default router;

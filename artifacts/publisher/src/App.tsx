@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ArticleDetail from "@/pages/article";
 import About from "@/pages/about";
+import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminArticles from "@/pages/admin/articles";
 import AdminOrders from "@/pages/admin/orders";
@@ -27,6 +28,9 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
+      {/* Admin Login Route (no layout) */}
+      <Route path="/admin/login" component={AdminLogin} />
+
       {/* Admin Routes */}
       <Route path="/admin" nest>
         <AdminLayout>

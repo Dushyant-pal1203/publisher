@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { useListArticles, useCreateArticle, useUpdateArticle, useDeleteArticle, Article, ArticleType, getListArticlesQueryKey, getGetCatalogSummaryQueryKey } from "@workspace/api-client-react";
+import {
+  useListArticles,
+  useCreateArticle,
+  useUpdateArticle,
+  useDeleteArticle,
+  Article,
+  ArticleType,
+  getListArticlesQueryKey,
+  getGetCatalogSummaryQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,15 +16,48 @@ import { z } from "zod";
 import { ObjectUploader } from "@workspace/object-storage-web";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Search, Loader2, Image as ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Loader2,
+  Image as ImageIcon,
+} from "lucide-react";
 
 const articleSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -42,11 +84,13 @@ export default function AdminArticles() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 
-  const { data: articles = [], isLoading } = useListArticles({ search: search || undefined });
+  const { data: articles = [], isLoading } = useListArticles({
+    search: search || undefined,
+  });
   const createArticle = useCreateArticle();
   const updateArticle = useUpdateArticle();
   const deleteArticle = useDeleteArticle();
-  
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -121,26 +165,42 @@ export default function AdminArticles() {
         { id: editingArticle.id, data: values },
         {
           onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListArticlesQueryKey() });
-            queryClient.invalidateQueries({ queryKey: getGetCatalogSummaryQueryKey() });
+            queryClient.invalidateQueries({
+              queryKey: getListArticlesQueryKey(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getGetCatalogSummaryQueryKey(),
+            });
             setIsModalOpen(false);
             toast({ title: "Article updated successfully" });
           },
-          onError: () => toast({ variant: "destructive", title: "Failed to update article" })
-        }
+          onError: () =>
+            toast({
+              variant: "destructive",
+              title: "Failed to update article",
+            }),
+        },
       );
     } else {
       createArticle.mutate(
         { data: values },
         {
           onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListArticlesQueryKey() });
-            queryClient.invalidateQueries({ queryKey: getGetCatalogSummaryQueryKey() });
+            queryClient.invalidateQueries({
+              queryKey: getListArticlesQueryKey(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getGetCatalogSummaryQueryKey(),
+            });
             setIsModalOpen(false);
             toast({ title: "Article created successfully" });
           },
-          onError: () => toast({ variant: "destructive", title: "Failed to create article" })
-        }
+          onError: () =>
+            toast({
+              variant: "destructive",
+              title: "Failed to create article",
+            }),
+        },
       );
     }
   };
@@ -151,12 +211,20 @@ export default function AdminArticles() {
         { id },
         {
           onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListArticlesQueryKey() });
-            queryClient.invalidateQueries({ queryKey: getGetCatalogSummaryQueryKey() });
+            queryClient.invalidateQueries({
+              queryKey: getListArticlesQueryKey(),
+            });
+            queryClient.invalidateQueries({
+              queryKey: getGetCatalogSummaryQueryKey(),
+            });
             toast({ title: "Article deleted successfully" });
           },
-          onError: () => toast({ variant: "destructive", title: "Failed to delete article" })
-        }
+          onError: () =>
+            toast({
+              variant: "destructive",
+              title: "Failed to delete article",
+            }),
+        },
       );
     }
   };
@@ -172,8 +240,8 @@ export default function AdminArticles() {
 
       <div className="flex items-center relative max-w-sm">
         <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
-        <Input 
-          placeholder="Search articles..." 
+        <Input
+          placeholder="Search articles..."
           className="pl-9 bg-card border-border/50 rounded-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -205,37 +273,70 @@ export default function AdminArticles() {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       {article.coverImageUrl ? (
-                        <img src={`/api/storage${article.coverImageUrl}`} alt="" className="w-8 h-10 object-cover rounded-sm border border-border/50" />
+                        <img
+                          src={`/api/storage${article.coverImageUrl}`}
+                          alt=""
+                          className="w-8 h-10 object-cover rounded-sm border border-border/50"
+                        />
                       ) : (
                         <div className="w-8 h-10 bg-muted flex items-center justify-center rounded-sm border border-border/50">
                           <ImageIcon className="w-4 h-4 text-muted-foreground/50" />
                         </div>
                       )}
                       <div>
-                        <div className="font-serif leading-tight">{article.title}</div>
-                        {article.featured && <Badge className="text-[9px] px-1 py-0 h-4 mt-1 bg-primary border-none rounded-none">Featured</Badge>}
+                        <div className="font-serif leading-tight">
+                          {article.title}
+                        </div>
+                        {article.featured && (
+                          <Badge className="text-[9px] px-1 py-0 h-4 mt-1 bg-primary border-none rounded-none">
+                            Featured
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{article.author}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[10px] uppercase rounded-none border-border/50">{article.type}</Badge>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {article.author}
                   </TableCell>
                   <TableCell>
-                    {new Intl.NumberFormat("en-IN", { style: "currency", currency: article.currency }).format(article.price)}
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase rounded-none border-border/50"
+                    >
+                      {article.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Intl.NumberFormat("en-IN", {
+                      style: "currency",
+                      currency: article.currency,
+                    }).format(article.price)}
                   </TableCell>
                   <TableCell>
                     {article.inStock ? (
-                      <span className="text-green-600 text-xs font-medium">In Stock</span>
+                      <span className="text-green-600 text-xs font-medium">
+                        In Stock
+                      </span>
                     ) : (
-                      <span className="text-amber-600 text-xs font-medium">Out of Stock</span>
+                      <span className="text-amber-600 text-xs font-medium">
+                        Out of Stock
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEditModal(article)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditModal(article)}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(article.id)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(article.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </TableCell>
@@ -243,7 +344,10 @@ export default function AdminArticles() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={6}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   No articles found.
                 </TableCell>
               </TableRow>
@@ -262,7 +366,6 @@ export default function AdminArticles() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              
               <FormField
                 control={form.control}
                 name="coverImageUrl"
@@ -271,19 +374,26 @@ export default function AdminArticles() {
                     <FormLabel>Cover Image</FormLabel>
                     <div className="flex items-center gap-4">
                       {field.value && (
-                        <img src={`/api/storage${field.value}`} alt="Cover preview" className="h-24 w-16 object-cover border border-border/50 rounded-sm shadow-sm" />
+                        <img
+                          src={`/api/storage${field.value}`}
+                          alt="Cover preview"
+                          className="h-24 w-16 object-cover border border-border/50 rounded-sm shadow-sm"
+                        />
                       )}
                       <ObjectUploader
                         onGetUploadParameters={async (file) => {
-                          const res = await fetch("/api/storage/uploads/request-url", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              name: file.name,
-                              size: file.size,
-                              contentType: file.type,
-                            }),
-                          });
+                          const res = await fetch(
+                            "/api/storage/uploads/request-url",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                name: file.name,
+                                size: file.size,
+                                contentType: file.type,
+                              }),
+                            },
+                          );
                           const { uploadURL } = await res.json();
                           return {
                             method: "PUT",
@@ -292,15 +402,21 @@ export default function AdminArticles() {
                           };
                         }}
                         onComplete={(result) => {
-                          if (result.successful && result.successful.length > 0) {
-                            const res = result.successful[0].response?.body as any;
+                          if (
+                            result.successful &&
+                            result.successful.length > 0
+                          ) {
+                            const res = result.successful[0].response
+                              ?.body as any;
                             if (res && res.objectPath) {
                               field.onChange(res.objectPath);
                             }
                           }
                         }}
                       >
-                        <span className="text-sm font-medium">Upload Cover</span>
+                        <span className="text-sm font-medium">
+                          Upload Cover
+                        </span>
                       </ObjectUploader>
                     </div>
                     <FormMessage />
@@ -309,83 +425,267 @@ export default function AdminArticles() {
               />
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="title" render={({ field }) => (
-                  <FormItem><FormLabel>Title</FormLabel><FormControl><Input className="rounded-sm" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="author" render={({ field }) => (
-                  <FormItem><FormLabel>Author</FormLabel><FormControl><Input className="rounded-sm" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input className="rounded-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="author"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author</FormLabel>
+                      <FormControl>
+                        <Input className="rounded-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <FormField control={form.control} name="type" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="rounded-sm">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(ArticleType).map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="rounded-sm"><SelectValue placeholder="Select type" /></SelectTrigger>
+                        <Input
+                          type="number"
+                          className="rounded-sm"
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {Object.values(ArticleType).map(t => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="price" render={({ field }) => (
-                  <FormItem><FormLabel>Price</FormLabel><FormControl><Input type="number" className="rounded-sm" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="currency" render={({ field }) => (
-                  <FormItem><FormLabel>Currency</FormLabel><FormControl><Input className="rounded-sm" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Currency</FormLabel>
+                      <FormControl>
+                        <Input className="rounded-sm" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <FormField control={form.control} name="description" render={({ field }) => (
-                <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea className="rounded-sm min-h-[100px]" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea className="rounded-sm min-h-25" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="isbn" render={({ field }) => (
-                  <FormItem><FormLabel>ISBN (optional)</FormLabel><FormControl><Input className="rounded-sm" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="publisher" render={({ field }) => (
-                  <FormItem><FormLabel>Publisher (optional)</FormLabel><FormControl><Input className="rounded-sm" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="publishedYear" render={({ field }) => (
-                  <FormItem><FormLabel>Year (optional)</FormLabel><FormControl><Input type="number" className="rounded-sm" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="pageCount" render={({ field }) => (
-                  <FormItem><FormLabel>Pages (optional)</FormLabel><FormControl><Input type="number" className="rounded-sm" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="language" render={({ field }) => (
-                  <FormItem><FormLabel>Language</FormLabel><FormControl><Input className="rounded-sm" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem><FormLabel>Category</FormLabel><FormControl><Input className="rounded-sm" {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="isbn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ISBN (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-sm"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="publisher"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Publisher (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-sm"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="publishedYear"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Year (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          className="rounded-sm"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pageCount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pages (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          className="rounded-sm"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="language"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Language</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-sm"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-sm"
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="flex gap-6 pt-4 border-t border-border/50">
-                <FormField control={form.control} name="inStock" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                    <div className="space-y-1 leading-none"><FormLabel>In Stock</FormLabel></div>
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="featured" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                    <div className="space-y-1 leading-none"><FormLabel>Featured</FormLabel></div>
-                  </FormItem>
-                )} />
+                <FormField
+                  control={form.control}
+                  name="inStock"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>In Stock</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="featured"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Featured</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-6">
-                <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                <Button type="submit" disabled={createArticle.isPending || updateArticle.isPending}>
-                  {(createArticle.isPending || updateArticle.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createArticle.isPending || updateArticle.isPending}
+                >
+                  {(createArticle.isPending || updateArticle.isPending) && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
                   {editingArticle ? "Save Changes" : "Create Article"}
                 </Button>
               </div>

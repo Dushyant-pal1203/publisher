@@ -68,3 +68,38 @@ CREATE TABLE "settings" (
 );
 --> statement-breakpoint
 CREATE INDEX "IDX_session_expire" ON "sessions" USING btree ("expire");
+
+-- Create admin_users table
+CREATE TABLE IF NOT EXISTS admin_users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE,
+  phone_number VARCHAR(20) UNIQUE,
+  first_name VARCHAR(100),
+  last_name VARCHAR(100),
+  password VARCHAR(255),
+  google_id VARCHAR(255) UNIQUE,
+  profile_image_url TEXT,
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,
+  role VARCHAR(50) DEFAULT 'admin' NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  last_login_at TIMESTAMPTZ
+);
+
+-- Create indexes for admin_users
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
+CREATE INDEX IF NOT EXISTS idx_admin_users_phone ON admin_users(phone_number);
+
+-- Create otp_verifications table
+CREATE TABLE IF NOT EXISTS otp_verifications (
+  id SERIAL PRIMARY KEY,
+  phone_number VARCHAR(20) NOT NULL,
+  otp VARCHAR(6) NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  is_used BOOLEAN DEFAULT FALSE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Create indexes for otp_verifications
+CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_verifications(phone_number);
+CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_verifications(expires_at);

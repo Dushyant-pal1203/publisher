@@ -47,14 +47,15 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "catalog:",
-    "@workspace/api-client-react": "workspace:*",
-    "@workspace/replit-auth-web": "workspace:*",
-    "@workspace/object-storage-web": "workspace:*",
+    "@types/react-phone-number-input": "^3.1.37",
     "@uppy/aws-s3": "^5.0.0",
     "@uppy/core": "^5.0.0",
     "@uppy/dashboard": "^5.0.0",
     "@uppy/react": "^5.0.0",
+    "@vitejs/plugin-react": "catalog:",
+    "@workspace/api-client-react": "workspace:*",
+    "@workspace/object-storage-web": "workspace:*",
+    "@workspace/replit-auth-web": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "^1.1.1",
@@ -79,5 +80,9 @@
     "vite": "catalog:",
     "wouter": "^3.3.5",
     "zod": "catalog:"
+  },
+  "dependencies": {
+    "otp-input-react": "^0.3.0",
+    "react-phone-number-input": "^3.4.16"
   }
 }

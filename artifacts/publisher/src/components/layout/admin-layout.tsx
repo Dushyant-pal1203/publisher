@@ -1,6 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@workspace/replit-auth-web";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -8,56 +7,64 @@ import {
   ShoppingBag,
   Settings,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import { useGetSettings } from "@workspace/api-client-react";
 
+interface AdminUser {
+  id: number;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+}
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading, login, logout } = useAuth();
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [location] = useLocation();
   const { data: settings } = useGetSettings();
+
+  useEffect(() => {
+    // Check authentication status
+    fetch("/api/admin-auth/me", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => {
+        setUser(data.user);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setUser(null);
+        setIsLoading(false);
+      });
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/admin-auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    window.location.href = "/admin/login";
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-muted/30">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        </div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center bg-muted/30 p-4">
-        <div className="max-w-md w-full bg-card border shadow-sm rounded-lg p-8 text-center">
-          <div className="h-25 w-25 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
-            <img src="/images/ph-logo.png" alt="Logo" />
-          </div>
-          <h1 className="font-serif text-2xl mb-2">
-            {settings?.publisherName || "Publisher"} Admin
-          </h1>
-          <p className="text-muted-foreground text-sm mb-8">
-            Please log in to manage the catalogue, view orders, and update
-            settings.
-          </p>
-          <Button onClick={login} size="lg" className="w-full">
-            Log in
-          </Button>
-          <div className="mt-6 text-sm">
-            <Link href="/" className="text-muted-foreground hover:underline">
-              &larr; Return to storefront
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+  if (!user) {
+    window.location.href = "/admin/login";
+    return null;
   }
 
   const navItems = [
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/articles", label: "Catalogue", icon: BookOpen },
-    { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-    { href: "/admin/settings", label: "Settings", icon: Settings },
+    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/articles", label: "Catalogue", icon: BookOpen },
+    { href: "/orders", label: "Orders", icon: ShoppingBag },
+    { href: "/settings", label: "Settings", icon: Settings },
   ];
 
   return (
@@ -73,6 +80,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </Link>
           <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider font-medium">
             Administration
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {user.firstName} {user.lastName}
           </p>
         </div>
 
@@ -100,7 +110,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
         <div className="p-4 border-t border-border/50">
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-2 w-full rounded-md text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <LogOut className="w-4 h-4" />
